@@ -22,3 +22,8 @@ module.exports = class GameUIState extends CocoModel
       }
     }
   }
+
+  defaults: -> {
+    selected: []
+    canDragCamera: true
+  }

@@ -87,6 +87,7 @@ module.exports = class ThangsTabView extends CocoView
     # just loading all Components for now: https://github.com/codecombat/codecombat/issues/405
     @componentCollection = @supermodel.loadCollection(new ComponentsCollection(), 'components').load()
     @level = options.level
+    @onThangsChanged = _.debounce(@onThangsChanged)
 
     $(document).bind 'contextmenu', @preventDefaultContextMenu
 
@@ -270,9 +271,10 @@ module.exports = class ThangsTabView extends CocoView
     $('#contextmenu').hide()
 
   onSpriteMouseDown: (e) ->
+    nativeEvent = e.originalEvent.nativeEvent
     # update selection
     selected = []
-    if key.command or key.ctrl
+    if nativeEvent.metaKey or nativeEvent.ctrlKey
       selected = _.clone(@gameUIState.get('selected'))
     if e.thang?.isSelectable
       alreadySelected = _.find(selected, (s) -> s.thang is e.thang)
@@ -605,14 +607,12 @@ module.exports = class ThangsTabView extends CocoView
     # update selection, since the thangs have been remade
     selected = @gameUIState.get('selected')
     if _.any(selected)
-      newSelected = []
       for singleSelected in selected
         sprite = @surface.lankBoss.lanks[singleSelected.thang.id]
         if sprite
           sprite.updateMarks()
-          thang = sprite.thang
-          newSelected.push(_.extend({}, singleSelected, { sprite, thang }))
-      @gameUIState.set('selected', newSelected)
+          singleSelected.sprite = sprite
+          singleSelected.thang = sprite.thang
     Backbone.Mediator.publish 'editor:thangs-edited', thangs: @world.thangs
 
   onTreemaThangSelected: (e, selectedTreemas) =>
@@ -623,7 +623,8 @@ module.exports = class ThangsTabView extends CocoView
     @gameUIState.set('selected', selected)
 
   onTreemaThangDoubleClicked: (e, treema) =>
-    return if key.command or key.ctrl
+    nativeEvent = e.originalEvent.nativeEvent
+    return if nativeEvent.ctrlKey or nativeEvent.metaKey
     id = treema?.data?.id
     @editThang thangID: id if id
 
