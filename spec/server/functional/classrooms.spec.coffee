@@ -60,6 +60,18 @@ describe 'GET /db/classroom/:id', ->
             expect(body._id).toBe(classroomID = body._id)
             done()
 
+describe 'GET /db/classroom by classCode', ->
+  it 'Returns the class if you include spaces', utils.wrap (done) ->
+    user = yield utils.initUser()
+    yield utils.loginUser(user)
+    teacher = yield utils.initUser()
+    classroom = new Classroom({ name: "some class", ownerID: teacher.id, camelCode: "FooBarBaz", code: "foobarbaz" })
+    yield classroom.save()
+    [res, body] = yield request.getAsync(getURL('/db/classroom?code=foo bar baz'), { json: true })
+    expect(res.statusCode).toBe(200)
+    expect(res.body.data?.name).toBe(classroom.get('name'))
+    done()
+
 describe 'POST /db/classroom', ->
   
   beforeEach utils.wrap (done) ->
@@ -74,7 +86,14 @@ describe 'POST /db/classroom', ->
     [res, body] = yield request.postAsync({uri: getURL('/db/level'), json: levelJSONB})
     expect(res.statusCode).toBe(200)
     @levelB = yield Level.findById(res.body._id)
+    levelJSONC = { name: 'Level C', permissions: [{access: 'owner', target: admin.id}], type: 'hero-practice' }
+    [res, body] = yield request.postAsync({uri: getURL('/db/level'), json: levelJSONC})
+    expect(res.statusCode).toBe(200)
+    @levelC = yield Level.findById(res.body._id)
     campaignJSON = { name: 'Campaign', levels: {} }
+    paredLevelC = _.pick(@levelC.toObject(), 'name', 'original', 'type', 'slug')
+    paredLevelC.campaignIndex = 2
+    campaignJSON.levels[@levelC.get('original').toString()] = paredLevelC
     paredLevelB = _.pick(@levelB.toObject(), 'name', 'original', 'type', 'slug')
     paredLevelB.campaignIndex = 1
     campaignJSON.levels[@levelB.get('original').toString()] = paredLevelB
@@ -112,7 +131,7 @@ describe 'POST /db/classroom', ->
     [res, body] = yield request.postAsync {uri: classroomsURL, json: data }
     expect(res.statusCode).toBe(403)
     done()
-    
+
   it 'makes a copy of the list of all levels in all courses', utils.wrap (done) ->
     teacher = yield utils.initUser({role: 'teacher'})
     yield utils.loginUser(teacher)
@@ -124,7 +143,17 @@ describe 'POST /db/classroom', ->
     expect(classroom.get('courses')[0].levels[0].slug).toBe('level-a')
     expect(classroom.get('courses')[0].levels[0].name).toBe('Level A')
     done()
-        
+
+  it 'makes a copy of the list of all non-practice levels in all courses', utils.wrap (done) ->
+    teacher = yield utils.initUser({role: 'teacher'})
+    yield utils.loginUser(teacher)
+    data = { name: 'tmp Classroom 2' }
+    [res, body] = yield request.postAsync {uri: classroomsURL, json: data }
+    classroom = yield Classroom.findById(res.body._id)
+    # console.log(JSON.stringify(classroom.get('courses')[0], null, 2));
+    expect(classroom.get('courses')[0].levels.length).toEqual(2)
+    done()
+
 describe 'GET /db/classroom/:handle/levels', ->
 
   beforeEach utils.wrap (done) ->
@@ -295,6 +324,18 @@ describe 'POST /db/classroom/-/members', ->
       fail('student should be added to the free course instance.')
     done()
     
+  it 'joins the class even with spaces in the classcode', utils.wrap (done) ->
+    yield utils.loginUser(@student)
+    url = getURL("/db/classroom/anything-here/members")
+    code = @classroom.get('code')
+    codeWithSpaces = code.split("").join(" ")
+    [res, body] = yield request.postAsync { uri: url, json: { code: codeWithSpaces } }
+    expect(res.statusCode).toBe(200)
+    classroom = yield Classroom.findById(@classroom.id)
+    if classroom.get('members').length isnt 1
+      fail 'expected classCode with spaces to work too'
+    done()
+
   it 'returns 403 if the user is a teacher', utils.wrap (done) ->
     yield utils.loginUser(@teacher)
     url = getURL("/db/classroom/~/members")

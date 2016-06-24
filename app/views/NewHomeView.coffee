@@ -18,14 +18,17 @@ module.exports = class NewHomeView extends RootView
   events:
     'click .play-btn': 'onClickPlayButton'
     'change #school-level-dropdown': 'onChangeSchoolLevelDropdown'
+    'click .student-btn': 'onClickStudentButton'
     'click .teacher-btn': 'onClickTeacherButton'
     'click #learn-more-link': 'onClickLearnMoreLink'
     'click .screen-thumbnail': 'onClickScreenThumbnail'
     'click #carousel-left': 'onLeftPressed'
     'click #carousel-right': 'onRightPressed'
     'click .request-demo': 'onClickRequestDemo'
-    'click .join-class': 'onClickJoinClass'
     'click .logout-btn': 'logoutAccount'
+    'click .profile-btn': 'onClickViewProfile'
+    'click .setup-class-btn': 'onClickSetupClass'
+    'click .wiki-btn': 'onClickWikiButton'
 
   shortcuts:
     'right': 'onRightPressed'
@@ -35,9 +38,7 @@ module.exports = class NewHomeView extends RootView
   initialize: (options) ->
     @courses = new CocoCollection [], {url: "/db/course", model: Course}
     @supermodel.loadCollection(@courses, 'courses')
-    @variation ?= me.getHomepageGroup()
 
-    window.tracker?.trackEvent 'Homepage Loaded', category: 'Homepage'
     if me.isTeacher()
       @trialRequests = new TrialRequests()
       @trialRequests.fetchOwn()
@@ -52,43 +53,52 @@ module.exports = class NewHomeView extends RootView
     else if me.justPlaysCourses()
       # Save players who might be in a classroom from getting into the campaign
       @playURL = '/courses'
-      @alternatePlayURL = '/play'
-      @alternatePlayText = 'home.play_campaign_version'
     else
       @playURL = '/play'
 
   onLoaded: ->
     @trialRequest = @trialRequests.first() if @trialRequests?.size()
     @isTeacherWithDemo = @trialRequest and @trialRequest.get('status') in ['approved', 'submitted']
-    @demoRequestURL = if me.isTeacher() then '/teachers/update-account'  else '/teachers/demo'
     super()
 
+  onClickLearnMoreLink: ->
+    window.tracker?.trackEvent 'Homepage Click Learn More', category: 'Homepage', ['Mixpanel']
+    @scrollToLink('#classroom-in-box-container')
+
   onClickPlayButton: (e) ->
-    @playSound 'menu-button-click'
-    e.preventDefault()
-    e.stopImmediatePropagation()
-    window.tracker?.trackEvent 'Homepage Click Play', category: 'Homepage'
-    application.router.navigate @playURL, trigger: true
-    #window.open @playURL, '_blank'
+    window.tracker?.trackEvent $(e.target).data('event-action'), category: 'Homepage', ['Mixpanel']
 
   onClickRequestDemo: (e) ->
     @playSound 'menu-button-click'
     e.preventDefault()
     e.stopImmediatePropagation()
-    window.tracker?.trackEvent 'Homepage Submit Jumbo Form', category: 'Homepage'
-    obj = storage.load('request-quote-form')
-    obj ?= {}
-    obj.role =  @$('#request-form-role').val()
-    obj.numStudents = @$('#request-form-range').val()
-    storage.save('request-quote-form', obj)
-    application.router.navigate "/teachers/demo", trigger: true
+    window.tracker?.trackEvent $(e.target).data('event-action'), category: 'Homepage', ['Mixpanel']
+    if me.isTeacher()
+      application.router.navigate '/teachers/update-account', trigger: true
+    else
+      application.router.navigate '/teachers/demo', trigger: true
 
-  onClickJoinClass: (e) ->
-    @playSound 'menu-button-click'
-    e.preventDefault()
-    e.stopImmediatePropagation()
-    window.tracker?.trackEvent 'Homepage Click Join Class', category: 'Homepage'
-    application.router.navigate "/courses", trigger: true
+  onClickSetupClass: (e) ->
+    window.tracker?.trackEvent $(e.target).data('event-action'), category: 'Homepage', ['Mixpanel']
+    application.router.navigate("/teachers/classes", { trigger: true })
+
+  onClickStudentButton: (e) ->
+    window.tracker?.trackEvent $(e.target).data('event-action'), category: 'Homepage', ['Mixpanel']
+
+  onClickTeacherButton: (e) ->
+    window.tracker?.trackEvent $(e.target).data('event-action'), category: 'Homepage', ['Mixpanel']
+    if me.isTeacher()
+      application.router.navigate('/teachers', { trigger: true })
+    else
+      @scrollToLink('.request-demo-row', 600)
+
+  onClickViewProfile: (e) ->
+    window.tracker?.trackEvent $(e.target).data('event-action'), category: 'Homepage', ['Mixpanel']
+    application.router.navigate("/user/#{me.getSlugOrID()}", { trigger: true })
+
+  onClickWikiButton: (e) ->
+    window.tracker?.trackEvent $(e.target).data('event-action'), category: 'Homepage', ['Mixpanel']
+    window.location.href = 'https://sites.google.com/a/codecombat.com/teacher-guides/course-guides'
 
   afterRender: ->
     @onChangeSchoolLevelDropdown()
@@ -112,9 +122,9 @@ module.exports = class NewHomeView extends RootView
 
   onChangeSchoolLevelDropdown: (e) ->
     levels =
-      elementary: {'introduction-to-computer-science': '2-4', 'computer-science-5': '15-20', default: '10-15', total: '50-70 hours (about one year)'}
-      middle: {'introduction-to-computer-science': '1-3', 'computer-science-5': '7-10', default: '5-8', total: '25-35 hours (about one semester)'}
-      high: {'introduction-to-computer-science': '1', 'computer-science-5': '6-9', default: '5-6', total: '22-28 hours (about one semester)'}
+      elementary: {'introduction-to-computer-science': '2-4', 'computer-science-6': '24-30', 'computer-science-7': '30-40', 'computer-science-8': '30-40', default: '16-25', total: '150-215 hours (about two and a half years)'}
+      middle: {'introduction-to-computer-science': '1-3', 'computer-science-6': '12-14', 'computer-science-7': '14-16', 'computer-science-8': '14-16', default: '8-12', total: '75-100 hours (about one and a half years)'}
+      high: {'introduction-to-computer-science': '1', 'computer-science-6': '10-12', 'computer-science-7': '12-16', 'computer-science-8': '12-16', default: '8-10', total: '65-85 hours (about one year)'}
     level = if e then $(e.target).val() else 'middle'
     @$el.find('#courses-row .course-details').each ->
       slug = $(@).data('course-slug')
@@ -125,18 +135,6 @@ module.exports = class NewHomeView extends RootView
 
   isNewPlayer: ->
     not me.get('stats')?.gamesCompleted and not me.get('heroConfig')
-
-  onClickLearnMoreLink: ->
-    window.tracker?.trackEvent 'Homepage Click Learn More', category: 'Homepage'
-    @scrollToLink('#classroom-in-box-container')
-
-  onClickTeacherButton: ->
-    if me.isTeacher()
-      window.tracker?.trackEvent 'Homepage Click Teacher Button (logged in)', category: 'Homepage'
-      application.router.navigate('/teachers', { trigger: true })
-    else
-      window.tracker?.trackEvent 'Homepage Click Teacher Button', category: 'Homepage'
-      @scrollToLink('.request-demo-row', 600)
 
   onRightPressed: (event) ->
     # Special handling, otherwise after you click the control, keyboard presses move the slide twice

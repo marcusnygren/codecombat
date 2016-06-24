@@ -71,7 +71,7 @@
     curriculum: "Total curriculum hours:"
     ffa: "Free for all students"
     lesson_time: "Lesson time:"
-    coming_soon: "Coming soon!"
+    coming_soon: "Coming this fall!"
     courses_available_in: "Courses are available in JavaScript, Python, and Java (coming soon!)"
     boast: "Boasts riddles that are complex enough to fascinate gamers and coders alike."
     winning: "A winning combination of RPG gameplay and programming homework that pulls off making kid-friendly education legitimately enjoyable."
@@ -243,6 +243,7 @@
 
   login:
     sign_up: "Create Account"
+    email_or_username: "Email or username"
     log_in: "Log In"
     logging_in: "Logging In"
     log_out: "Log Out"
@@ -439,6 +440,8 @@
     tome_available_spells: "Available Spells"
     tome_your_skills: "Your Skills"
     tome_current_method: "Current Method"
+    hints: "Hints"
+    hints_title: "Hint {{number}}"
     code_saved: "Code Saved"
     skip_tutorial: "Skip (esc)"
     keyboard_shortcuts: "Key Shortcuts"
@@ -812,6 +815,7 @@
     more_info_1: "Our"
     more_info_2: "teachers forum"
     more_info_3: "is a good place to connect with fellow educators who are using CodeCombat."
+    licenses_needed: "Licenses needed"
 
   teachers_quote:
     name: "Demo Form"
@@ -1314,6 +1318,9 @@
     sent_verification: "We've sent a verification email to:"
     you_can_edit: "You can edit your email address in "
     account_settings: "Account Settings"
+    select_your_hero: "Select Your Hero"
+    select_your_hero_description: "You can always change your hero by going to your Courses page and clicking \"Select Hero\""
+    select_this_hero: "Select this Hero"
 
   teacher:
     teacher_dashboard: "Teacher Dashboard" # Navbar

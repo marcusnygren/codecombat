@@ -33,6 +33,7 @@ module.exports = class CocoRouter extends Backbone.Router
     'admin/design-elements': go('admin/DesignElementsView')
     'admin/files': go('admin/FilesView')
     'admin/analytics': go('admin/AnalyticsView')
+    'admin/school-counts': go('admin/SchoolCountsView')
     'admin/analytics/subscriptions': go('admin/AnalyticsSubscriptionsView')
     'admin/level-sessions': go('admin/LevelSessionsView')
     'admin/users': go('admin/UsersView')
@@ -69,8 +70,8 @@ module.exports = class CocoRouter extends Backbone.Router
     'contribute/diplomat': go('contribute/DiplomatView')
     'contribute/scribe': go('contribute/ScribeView')
 
-    'courses': go('courses/CoursesView', { studentsOnly: true })
-    'Courses': go('courses/CoursesView', { studentsOnly: true })
+    'courses': go('courses/CoursesView')
+    'Courses': go('courses/CoursesView')
     'courses/students': redirect('/courses')
     'courses/teachers': redirect('/teachers/classes')
     'courses/purchase': redirect('/teachers/licenses')
