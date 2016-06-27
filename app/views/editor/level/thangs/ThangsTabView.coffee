@@ -624,7 +624,7 @@ module.exports = class ThangsTabView extends CocoView
 
   onTreemaThangDoubleClicked: (e, treema) =>
     nativeEvent = e.originalEvent.nativeEvent
-    return if nativeEvent.ctrlKey or nativeEvent.metaKey
+    return if nativeEvent and (nativeEvent.ctrlKey or nativeEvent.metaKey)
     id = treema?.data?.id
     @editThang thangID: id if id
 
